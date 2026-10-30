@@ -529,7 +529,7 @@
                     plato).
                 </div>
                 <div id="tramosList" class="space-y-3 mb-3"></div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
                     <button onclick="agregarTramoUI('cilindro')"
                         class="py-2 px-2 rounded-lg text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-300 transition">
                         + Tramo Cilíndrico
@@ -542,6 +542,39 @@
                         class="py-2 px-2 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition">
                         + Refrentado
                     </button>
+                    <button onclick="agregarTramoUI('interior')"
+                        class="py-2 px-2 rounded-lg text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition">
+                        + Tramo Interior
+                    </button>
+                </div>
+
+                <!-- SECCIÓN DE SECUENCIA DE MECHAS GENERADAS -->
+                <div id="seccionMechas" class="hidden border-t border-slate-200 pt-3">
+                    <h3 class="font-bold text-xs text-slate-900 uppercase mb-2 flex items-center gap-1.5">
+                        <span>🔩</span> Secuencia de Mechas Sugerida (Modificable)
+                    </h3>
+                    <div class="overflow-x-auto border border-emerald-200 rounded-lg bg-emerald-50/30">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-emerald-100/50 text-emerald-900 border-b border-emerald-200">
+                                <tr>
+                                    <th class="p-2 w-[18%]">Mecha</th>
+                                    <th class="p-2 w-[10%]">Cant.</th>
+                                    <th class="p-2 w-[14%]">Carrera (mm)</th>
+                                    <th class="p-2 w-[10%]">Vc (m/min)</th>
+                                    <th class="p-2 w-[10%]">Fn (mm/r)</th>
+                                    <th class="p-2 w-[19%]">Código</th>
+                                    <th class="p-2 w-[19%]">Material</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyMechas" class="divide-y divide-emerald-100 font-mono">
+                                <!-- JS llena esto -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-[10px] text-emerald-700 mt-1">
+                        💡 La columna "Carrera" es la longitud total de penetración (editable). Las mechas se calculan
+                        automáticamente en escalones.
+                    </p>
                 </div>
             </div>
 
@@ -1136,6 +1169,7 @@
         let tramosPieza = [];
         let contadorTramos = 0;
         let lastMangoKeyChaflan = "";
+        let secuenciaMechas = [];
 
         // =========================================================================
         // 2. VALIDACIÓN PREVIA
@@ -1157,16 +1191,16 @@
         }
 
         // =========================================================================
-        // 3. POSTURA B AUTOMÁTICA EN EL TRAMO IZQUIERDO (IGNORANDO REFRENTADOS)
+        // 3. POSTURA B AUTOMÁTICA EN EL TRAMO IZQUIERDO (IGNORANDO REFRENTADOS E INTERIORES)
         // =========================================================================
         function asegurarPosturaB() {
             if (tramosPieza.length === 0) return;
             let asignadoB = false;
             tramosPieza.forEach((t) => {
-                if (t.tipo !== "refrentado" && !asignadoB) {
+                if (t.tipo !== "refrentado" && t.tipo !== "interior" && !asignadoB) {
                     t.postura = "B";
                     asignadoB = true;
-                } else {
+                } else if (t.tipo !== "interior") {
                     t.postura = "A";
                 }
             });
@@ -1204,8 +1238,6 @@
                 .sort((a, b) => a - b);
         }
 
-        // Devuelve {rpm, tipo, nota}
-        // tipo: 'nominal' | 'tope' | 'escalon' | 'escalon-min' | 'sin-steps'
         function seleccionarRpm(nominalRpm) {
             if (!isFinite(nominalRpm) || nominalRpm <= 0) {
                 return { rpm: 0, tipo: "nominal", nota: "" };
@@ -1234,24 +1266,25 @@
             if (validSteps.length > 0) {
                 return { rpm: validSteps[validSteps.length - 1], tipo: "escalon", nota: "" };
             }
-            // Todos los escalones del torno son mayores que la RPM nominal
             return { rpm: steps[0], tipo: "escalon-min", nota: "Todos los escalones del torno superan la RPM nominal; se fuerza el mínimo" };
         }
 
-        function displayRpmText(rpmTeorica, sel) {
-            const teo = rpmTeorica.toFixed(0);
+        function displayRpmText(nominalRpm, sel, vc, d) {
+            const teo = nominalRpm.toFixed(0);
             const real = sel.rpm.toFixed(0);
+            const formula = `n = <span class="frac inline-flex"><span>${vc} · 1000</span><span>π · ${d.toFixed(2)}</span></span> = ${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span>`;
+
             if (sel.tipo === "escalon") {
-                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong class="text-indigo-700">n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(escalón inferior de la caja del torno)</span>`;
+                return `${formula} → <strong class="text-indigo-700">n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(escalón inferior de la caja del torno)</span>`;
             }
             if (sel.tipo === "escalon-min") {
-                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong class="text-amber-700">n real adoptada = ${real} rpm ⚠️</strong> <span class="text-slate-500 text-[10px]">(mínimo del torno; nominal &lt; mínimo)</span>`;
+                return `${formula} → <strong class="text-amber-700">n real adoptada = ${real} rpm ⚠️</strong> <span class="text-slate-500 text-[10px]">(mínimo del torno; nominal &lt; mínimo)</span>`;
             }
             if (sel.tipo === "tope") {
-                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong class="text-amber-700">n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(límite máx. husillo)</span>`;
+                return `${formula} → <strong class="text-amber-700">n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(límite máx. husillo)</span>`;
             }
             if (sel.tipo === "sin-steps") {
-                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong>n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(sin escalones cargados)</span>`;
+                return `${formula} → <strong>n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(sin escalones cargados)</span>`;
             }
             return `<strong>n adoptada = ${teo} rpm</strong> <span class="text-slate-500 text-[10px]">(nominal, sin limitación)</span>`;
         }
@@ -1850,6 +1883,8 @@
 
         function resetearFormulario() {
             tramosPieza = [];
+            secuenciaMechas = [];
+            window._lastSecuenciaMechas = [];
             contadorTramos = 0;
             renderizarListaTramos();
             document.getElementById("matSelect").value = "";
@@ -1921,6 +1956,8 @@
             });
             document.getElementById("infoIsoDesb").classList.add("hidden");
             document.getElementById("infoIsoTerm").classList.add("hidden");
+            document.getElementById("seccionMechas").classList.add("hidden");
+            document.getElementById("tbodyMechas").innerHTML = "";
             const idsInputsCat = [
                 "rApMinDesb", "rApMedDesb", "rApMaxDesb", "rApMinTerm", "rApMedTerm", "rApMaxTerm",
                 "rFnMinDesb", "rFnMedDesb", "rFnMaxDesb", "rFnMinTerm", "rFnMedTerm", "rFnMaxTerm",
@@ -2235,7 +2272,9 @@
                         ? `Cilindro #${contadorTramos}`
                         : tipo === "cono"
                             ? `Cono #${contadorTramos}`
-                            : `Refrentado #${contadorTramos}`,
+                            : tipo === "refrentado"
+                                ? `Refrentado #${contadorTramos}`
+                                : `Interior #${contadorTramos}`,
                 dMayor: tipo === "refrentado" ? dBrutoActual : 37,
                 dMenor: 26,
                 largo: 20,
@@ -2245,11 +2284,16 @@
                 sobreespesorAxial: 5,
                 chaflanIzq: 0,
                 chaflanDer: 0,
+                // Interior defaults
+                pasante: true,
+                cara: "A",
+                cantidad: 1
             };
             const nuevo = datosIniciales ? { ...defecto, ...datosIniciales, id: contadorTramos, tipo: tipo } : defecto;
             tramosPieza.push(nuevo);
             asegurarPosturaB();
             renderizarListaTramos();
+            recalcularSecuenciaMechas();
             actualizarSeccionChaflan();
             if (!silencioso) {
                 dibujarPiezaCanvas();
@@ -2262,6 +2306,7 @@
             tramosPieza = tramosPieza.filter((t) => t.id !== id);
             asegurarPosturaB();
             renderizarListaTramos();
+            recalcularSecuenciaMechas();
             actualizarSeccionChaflan();
             dibujarPiezaCanvas();
             if (verificarRequisitosParaCalcular().ok) analizarGeometriaYSugerirHerramientas(false);
@@ -2271,11 +2316,14 @@
         function actualizarCampoTramo(id, campo, valor) {
             const tr = tramosPieza.find((t) => t.id === id);
             if (!tr) return;
-            if (campo === "postura" || campo === "modoCono" || campo === "nombre") tr[campo] = valor;
-            else if (campo === "esSuplementario") tr[campo] = Boolean(valor);
+            if (campo === "postura" || campo === "modoCono" || campo === "nombre" || campo === "cara") tr[campo] = valor;
+            else if (campo === "esSuplementario" || campo === "pasante") tr[campo] = Boolean(valor);
             else tr[campo] = parseFloat(valor) || 0;
-            if (campo === "modoCono" || (tr.tipo === "refrentado" && (campo === "dMayor" || campo === "sobreespesorAxial")))
+            if (campo === "modoCono" || (tr.tipo === "refrentado" && (campo === "dMayor" || campo === "sobreespesorAxial")) || campo === "pasante")
                 renderizarListaTramos();
+            if (tr.tipo === "interior" && campo !== "nombre" && campo !== "cara") {
+                recalcularSecuenciaMechas();
+            }
             if (campo === "chaflanIzq" || campo === "chaflanDer") actualizarSeccionChaflan();
             dibujarPiezaCanvas();
             marcarCambiosPendientes();
@@ -2325,7 +2373,9 @@
             }
             tramosPieza.forEach((tr, idx) => {
                 const card = document.createElement("div");
-                const borderCol = tr.postura === "B" ? "border-amber-500 bg-amber-50/40" : "border-blue-600 bg-slate-50";
+                let borderCol = tr.postura === "B" ? "border-amber-500 bg-amber-50/40" : "border-blue-600 bg-slate-50";
+                if (tr.tipo === "interior") borderCol = "border-emerald-500 bg-emerald-50/40";
+
                 card.className = `tramo-card p-3 rounded-lg border border-slate-200 border-l-4 ${borderCol} text-xs space-y-2 bg-white transition-all duration-200`;
                 card.setAttribute("draggable", "true");
                 card.setAttribute("ondragstart", `iniciarArrastre(event, ${idx})`);
@@ -2335,9 +2385,9 @@
                 card.setAttribute("ondrop", `soltarTramo(event, ${idx})`);
                 card.setAttribute("ondragend", `finalizarArrastre(event)`);
 
-                const etiquetaTipo = tr.tipo === "cilindro" ? "CILINDRO" : tr.tipo === "cono" ? "CONO" : "REFRENTADO";
+                const etiquetaTipo = tr.tipo === "cilindro" ? "CILINDRO" : tr.tipo === "cono" ? "CONO" : tr.tipo === "refrentado" ? "REFRENTADO" : "INTERIOR";
                 const badgeTipoColor =
-                    tr.tipo === "cilindro" ? "bg-blue-700" : tr.tipo === "cono" ? "bg-purple-700" : "bg-amber-600";
+                    tr.tipo === "cilindro" ? "bg-blue-700" : tr.tipo === "cono" ? "bg-purple-700" : tr.tipo === "refrentado" ? "bg-amber-600" : "bg-emerald-600";
 
                 let controlesEspecificos = "";
                 if (tr.tipo === "cilindro") {
@@ -2377,7 +2427,31 @@
                             <div><label class="block font-semibold text-slate-700 mb-0.5">Espesor Axial a Quitar (mm):</label><input type="number" value="${tr.sobreespesorAxial}" step="0.5" oninput="actualizarCampoTramo(${tr.id}, 'sobreespesorAxial', this.value)" class="w-full p-1.5 rounded border border-slate-300 font-mono font-bold bg-white"></div>
                         </div>
                         <div class="p-1.5 rounded bg-amber-100/70 border border-amber-300 text-[10.5px] text-amber-950">💡 <strong>Recorrido Radial:</strong> la herramienta frentea desde Ø${tr.dMayor} mm hasta el centro (Ø0), recorriendo <strong>L = R = ${radioRecorrido} mm</strong> por pasada.</div>`;
+                } else if (tr.tipo === "interior") {
+                    controlesEspecificos = `
+                        <div class="grid grid-cols-3 gap-2">
+                            <div><label class="block font-semibold text-emerald-800 mb-0.5">Ø Interior (mm):</label><input type="number" value="${tr.dMenor}" step="0.5" min="0.5" oninput="actualizarCampoTramo(${tr.id}, 'dMenor', this.value)" class="w-full p-1.5 rounded border border-emerald-300 font-mono font-bold bg-white"></div>
+                            <div><label class="block font-semibold text-emerald-800 mb-0.5">Profundidad (mm):</label><input type="number" value="${tr.largo}" step="0.5" min="0.5" oninput="actualizarCampoTramo(${tr.id}, 'largo', this.value)" class="w-full p-1.5 rounded border border-emerald-300 font-mono font-bold bg-white" ${tr.pasante ? "disabled class='opacity-50'" : ""}></div>
+                            <div><label class="block font-semibold text-emerald-800 mb-0.5">Cant. Agujeros:</label><input type="number" value="${tr.cantidad || 1}" step="1" min="1" oninput="actualizarCampoTramo(${tr.id}, 'cantidad', this.value)" class="w-full p-1.5 rounded border border-emerald-300 font-mono font-bold bg-white"></div>
+                        </div>
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-emerald-100">
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center gap-1 font-semibold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" ${tr.pasante ? "checked" : ""} onchange="actualizarCampoTramo(${tr.id}, 'pasante', this.checked); renderizarListaTramos(); recalcularSecuenciaMechas();" class="rounded text-emerald-600" /> Pasante
+                                </label>
+                                <select onchange="actualizarCampoTramo(${tr.id}, 'cara', this.value)" class="p-1 rounded border border-slate-300 text-xs">
+                                    <option value="A" ${tr.cara === "A" ? "selected" : ""}>Desde Cara A</option>
+                                    <option value="B" ${tr.cara === "B" ? "selected" : ""}>Desde Cara B</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-emerald-700 mt-1">💡 Las mechas se calculan automáticamente en la tabla de abajo.</p>`;
                 }
+
+                const badgePostura = tr.tipo !== "interior" ? `
+                    <span class="p-1 rounded text-[11px] font-bold ${tr.postura === "B" ? "bg-amber-100 text-amber-900 border border-amber-400" : "bg-blue-100 text-blue-900 border border-blue-400"}" title="${tr.postura === "B" ? "Primer tramo = siempre Lado B (mordazas)" : "Lado A (1.ª Postura)"}">
+                        ${tr.postura === "B" ? "🔒 Lado B" : "Lado A"}
+                    </span>` : '';
 
                 card.innerHTML = `
                     <div class="flex items-center justify-between gap-2">
@@ -2387,9 +2461,7 @@
                             <input type="text" value="${tr.nombre}" oninput="actualizarCampoTramo(${tr.id}, 'nombre', this.value)" class="p-1 rounded border border-transparent hover:border-slate-300 focus:border-blue-400 bg-transparent focus:bg-white font-bold text-slate-800 text-xs w-full">
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <span class="p-1 rounded text-[11px] font-bold ${tr.postura === "B" ? "bg-amber-100 text-amber-900 border border-amber-400" : "bg-blue-100 text-blue-900 border border-blue-400"}" title="${tr.postura === "B" ? "Primer tramo = siempre Lado B (mordazas)" : "Lado A (1.ª Postura)"}">
-                                ${tr.postura === "B" ? "🔒 Lado B" : "Lado A"}
-                            </span>
+                            ${badgePostura}
                             <button onclick="eliminarTramo(${tr.id})" class="text-red-600 hover:text-red-800 font-bold px-1.5 py-0.5 rounded border border-red-200 bg-white">✕</button>
                         </div>
                     </div>
@@ -2427,12 +2499,128 @@
             dragIndex = -1;
             asegurarPosturaB();
             renderizarListaTramos();
+            recalcularSecuenciaMechas();
             actualizarSeccionChaflan();
             dibujarPiezaCanvas();
             marcarCambiosPendientes();
         }
         function finalizarArrastre(e) {
             e.target.style.opacity = "1";
+        }
+
+        // =========================================================================
+        // 9.b LÓGICA DE SECUENCIA DE MECHAS
+        // =========================================================================
+        function recalcularSecuenciaMechas() {
+            const interiores = tramosPieza.filter(t => t.tipo === "interior");
+            const seccion = document.getElementById("seccionMechas");
+
+            if (interiores.length === 0) {
+                seccion.classList.add("hidden");
+                secuenciaMechas = [];
+                window._lastSecuenciaMechas = [];
+                return;
+            }
+            seccion.classList.remove("hidden");
+
+            const lBruto = parseFloat(document.getElementById("lBrutoInput").value) || 80;
+            const targets = interiores.map(t => ({
+                d: t.dMenor,
+                L: t.pasante ? (lBruto + 5) : t.largo, // +5mm para pasante
+                pasante: t.pasante,
+                cantidad: t.cantidad || 1
+            })).sort((a, b) => a.d - b.d);
+
+            let nuevaSecuencia = [];
+            // 1. Mecha de centro
+            nuevaSecuencia.push({
+                tipo: "centro",
+                d: 3.15,
+                carrera: 3,
+                cantidad: targets.reduce((sum, t) => sum + t.cantidad, 0), // Suma de todas las cantidades
+                vc: 20,
+                fn: 0.05,
+                codigo: "A1201",
+                material: "HSS",
+                pasante: false // Por defecto el centro no es pasante
+            });
+
+            let currentD = 0;
+            targets.forEach(t => {
+                let targetD = t.d;
+                let targetL = t.L;
+
+                while (currentD < targetD - 0.1) {
+                    let nextD = currentD === 0 ? 6 : currentD + 6;
+
+                    // Si el objetivo está muy cerca o el paso es muy chico, ir directo
+                    if (nextD >= targetD - 2) nextD = targetD;
+
+                    // Si el objetivo es menor a 6 (ej 5), hacerlo de una
+                    if (currentD === 0 && targetD < 6) nextD = targetD;
+                    if (nextD > targetD) nextD = targetD;
+
+                    nuevaSecuencia.push({
+                        tipo: nextD === targetD ? "final" : "intermedia",
+                        d: nextD,
+                        carrera: targetL,
+                        cantidad: t.cantidad,
+                        pasante: t.pasante,
+                        vc: 25,
+                        fn: 0.15,
+                        codigo: "CoroDrill 460",
+                        material: "HM (Metal Duro)"
+                    });
+                    currentD = nextD;
+                }
+            });
+
+            // Preservar ediciones del usuario (Carrera, Vc, Fn, Codigo, Material)
+            secuenciaMechas = nuevaSecuencia.map(nueva => {
+                const prev = (window._lastSecuenciaMechas || []).find(p => p.d === nueva.d);
+                if (prev) {
+                    return {
+                        ...nueva,
+                        carrera: prev.carrera !== undefined ? prev.carrera : nueva.carrera, // Mantiene la carrera editada
+                        vc: prev.vc,
+                        fn: prev.fn,
+                        codigo: prev.codigo,
+                        material: prev.material
+                    };
+                }
+                return nueva;
+            });
+            window._lastSecuenciaMechas = JSON.parse(JSON.stringify(secuenciaMechas));
+
+            renderSecuenciaMechas();
+        }
+
+        function renderSecuenciaMechas() {
+            const tbody = document.getElementById("tbodyMechas");
+            tbody.innerHTML = "";
+            secuenciaMechas.forEach((m, idx) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="p-2 font-bold text-slate-800">${idx + 1}. ${m.tipo === 'centro' ? 'Mecha Centro' : 'Ø ' + m.d + ' mm'}</td>
+                    <td class="p-1"><input type="number" value="${m.cantidad}" min="1" onchange="actualizarMecha(${idx}, 'cantidad', this.value)" class="w-12 p-1 border rounded text-xs text-center"></td>
+                    <td class="p-1"><input type="number" value="${m.carrera.toFixed(1)}" step="0.5" onchange="actualizarMecha(${idx}, 'carrera', this.value)" class="w-16 p-1 border rounded text-xs text-center bg-yellow-50"></td>
+                    <td class="p-1"><input type="number" value="${m.vc}" step="1" onchange="actualizarMecha(${idx}, 'vc', this.value)" class="w-14 p-1 border rounded text-xs text-center"></td>
+                    <td class="p-1"><input type="number" value="${m.fn}" step="0.01" onchange="actualizarMecha(${idx}, 'fn', this.value)" class="w-14 p-1 border rounded text-xs text-center"></td>
+                    <td class="p-1"><input type="text" value="${m.codigo}" onchange="actualizarMecha(${idx}, 'codigo', this.value)" class="w-full p-1 border rounded text-xs"></td>
+                    <td class="p-1"><input type="text" value="${m.material}" onchange="actualizarMecha(${idx}, 'material', this.value)" class="w-full p-1 border rounded text-xs"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function actualizarMecha(idx, campo, valor) {
+            if (campo === 'vc' || campo === 'fn' || campo === 'carrera' || campo === 'cantidad') {
+                secuenciaMechas[idx][campo] = parseFloat(valor);
+            } else {
+                secuenciaMechas[idx][campo] = valor;
+            }
+            window._lastSecuenciaMechas = JSON.parse(JSON.stringify(secuenciaMechas));
+            marcarCambiosPendientes();
         }
 
         // =========================================================================
@@ -2449,14 +2637,14 @@
 
             const dBruto = parseFloat(document.getElementById("dBrutoInput").value) || 0;
             const lBruto = parseFloat(document.getElementById("lBrutoInput").value) || 0;
-            const tramosGeom = tramosPieza.filter((t) => t.tipo !== "refrentado");
+            const tramosGeom = tramosPieza.filter((t) => t.tipo !== "refrentado" && t.tipo !== "interior");
 
             if (tramosGeom.length === 0 || dBruto <= 0) {
                 ctx.fillStyle = "#64748b";
                 ctx.font = "12px Inter, sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText(
-                    "Sin geometría cargada — Ingresá el Ø Bruto (Panel 2) y los tramos de la pieza (Panel 4)",
+                    "Sin geometría exterior cargada — Ingresá el Ø Bruto (Panel 2) y los tramos de la pieza (Panel 4)",
                     canvas.width / 2,
                     canvas.height / 2,
                 );
@@ -2520,7 +2708,7 @@
 
             // Tramos (pieza terminada)
             let curX = padLeft;
-            const minPxChaflan = 4; // Mínimo de píxeles para que el chaflán sea visible
+            const minPxChaflan = 4;
 
             tramosGeom.forEach((t) => {
                 let dIzq = t.dMenor,
@@ -2536,7 +2724,6 @@
                 const rIzqPx = (dIzq / 2) * scaleY;
                 const rDerPx = (dDer / 2) * scaleY;
 
-                // Forzar tamaño mínimo visible para los chaflanes
                 const cIzqPxY = (t.chaflanIzq || 0) > 0 ? Math.max((t.chaflanIzq || 0) * scaleY, minPxChaflan) : 0;
                 const cDerPxY = (t.chaflanDer || 0) > 0 ? Math.max((t.chaflanDer || 0) * scaleY, minPxChaflan) : 0;
                 const cIzqPxX = (t.chaflanIzq || 0) > 0 ? Math.max((t.chaflanIzq || 0) * scaleX, minPxChaflan) : 0;
@@ -2596,6 +2783,66 @@
                 ctx.restore();
             }
 
+            // TRAMOS INTERIORES (Agujeros)
+            const interiores = tramosPieza.filter(t => t.tipo === "interior").sort((a, b) => b.dMenor - a.dMenor); // Sort desc to draw big first
+            interiores.forEach(m => {
+                const rMechaPx = (m.dMenor / 2) * scaleY;
+                const lMechaPx = (m.pasante ? largoTotalPieza : m.largo) * scaleX;
+                const puntaPx = rMechaPx / Math.tan(59 * Math.PI / 180); // 118° drill point
+
+                let xInicio, xFin, xPunta;
+                if (m.cara === "A") {
+                    xInicio = padLeft + largoTotalPieza * scaleX; // Right face
+                    xFin = xInicio - lMechaPx;
+                    xPunta = xFin - puntaPx;
+                } else {
+                    xInicio = padLeft; // Left face
+                    xFin = xInicio + lMechaPx;
+                    xPunta = xFin + puntaPx;
+                }
+
+                ctx.save();
+                ctx.strokeStyle = "#34d399"; // emerald-400
+                ctx.fillStyle = "rgba(16, 185, 129, 0.15)";
+                ctx.setLineDash([5, 4]);
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                if (m.cara === "A") {
+                    ctx.moveTo(xInicio, cy - rMechaPx);
+                    ctx.lineTo(xFin, cy - rMechaPx);
+                    ctx.lineTo(xPunta, cy);
+                    ctx.lineTo(xFin, cy + rMechaPx);
+                    ctx.lineTo(xInicio, cy + rMechaPx);
+                } else {
+                    ctx.moveTo(xInicio, cy - rMechaPx);
+                    ctx.lineTo(xFin, cy - rMechaPx);
+                    ctx.lineTo(xPunta, cy);
+                    ctx.lineTo(xFin, cy + rMechaPx);
+                    ctx.lineTo(xInicio, cy + rMechaPx);
+                }
+                ctx.stroke();
+                ctx.fill();
+
+                // Eje central de la mecha
+                ctx.beginPath();
+                ctx.moveTo(xInicio, cy);
+                if (m.cara === "A") ctx.lineTo(xPunta - 10, cy);
+                else ctx.lineTo(xPunta + 10, cy);
+                ctx.strokeStyle = "#10b981";
+                ctx.setLineDash([12, 4, 2, 4]);
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Etiqueta de la mecha
+                ctx.fillStyle = "#6ee7b7";
+                ctx.font = "bold 10px JetBrains Mono, monospace";
+                ctx.textAlign = "center";
+                const lblMecha = `Ø${m.dMenor} ${m.pasante ? "(pasante)" : "(L=" + m.largo + ")"}`;
+                ctx.fillText(lblMecha, (xInicio + xFin) / 2, cy - rMechaPx - 6);
+                ctx.restore();
+            });
+
             // Contrapunta
             if (document.getElementById("chkContrapunta") && document.getElementById("chkContrapunta").checked) {
                 ctx.save();
@@ -2624,19 +2871,19 @@
             // COTA DE LONGITUD TOTAL
             const dimY = canvas.height - 25;
             const xIni = padLeft;
-            const xFin = padLeft + largoTotalPieza * scaleX;
+            const xFinDim = padLeft + largoTotalPieza * scaleX;
             ctx.save();
             ctx.strokeStyle = "#22d3ee";
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(xIni, cy + rBrutoPx + 15);
             ctx.lineTo(xIni, dimY);
-            ctx.moveTo(xFin, cy + rBrutoPx + 15);
-            ctx.lineTo(xFin, dimY);
+            ctx.moveTo(xFinDim, cy + rBrutoPx + 15);
+            ctx.lineTo(xFinDim, dimY);
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(xIni, dimY);
-            ctx.lineTo(xFin, dimY);
+            ctx.lineTo(xFinDim, dimY);
             ctx.stroke();
             ctx.fillStyle = "#22d3ee";
             ctx.beginPath();
@@ -2646,9 +2893,9 @@
             ctx.closePath();
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(xFin, dimY);
-            ctx.lineTo(xFin - 10, dimY - 5);
-            ctx.lineTo(xFin - 10, dimY + 5);
+            ctx.moveTo(xFinDim, dimY);
+            ctx.lineTo(xFinDim - 10, dimY - 5);
+            ctx.lineTo(xFinDim - 10, dimY + 5);
             ctx.closePath();
             ctx.fill();
 
@@ -2656,10 +2903,10 @@
             ctx.font = "bold 14px JetBrains Mono, monospace";
             const txtW = ctx.measureText(textLabel).width;
             ctx.fillStyle = "#0f172a";
-            ctx.fillRect((xIni + xFin) / 2 - txtW / 2 - 8, dimY + 5, txtW + 16, 24);
+            ctx.fillRect((xIni + xFinDim) / 2 - txtW / 2 - 8, dimY + 5, txtW + 16, 24);
             ctx.fillStyle = "#67e8f9";
             ctx.textAlign = "center";
-            ctx.fillText(textLabel, (xIni + xFin) / 2, dimY + 22);
+            ctx.fillText(textLabel, (xIni + xFinDim) / 2, dimY + 22);
             ctx.restore();
         }
 
@@ -2768,11 +3015,11 @@
 
             let tramosA, tramosB;
             if (modoProfesor || document.getElementById("chkContrapunta").checked) {
-                tramosA = tramosPieza;
+                tramosA = tramosPieza.filter(t => t.tipo !== "interior");
                 tramosB = [];
             } else {
-                tramosA = tramosPieza.filter((t) => t.postura === "A");
-                tramosB = tramosPieza.filter((t) => t.postura === "B");
+                tramosA = tramosPieza.filter((t) => t.postura === "A" && t.tipo !== "interior");
+                tramosB = tramosPieza.filter((t) => t.postura === "B" && t.tipo !== "interior");
             }
 
             function calcRefrentado(titulo, dIn, sobreespAxial, notaExtra = "") {
@@ -2799,7 +3046,7 @@
                                 <div>2. N° Pasadas = <span class="frac inline-flex"><span>${profRadial.toFixed(2)}</span><span>${apDesb}</span></span> = <strong>${nPasadas} pasadas</strong></div>
                             </div>
                             <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
-                                <div>3. n = <span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${displayRpmText(rpmTeorica, rpmSel)}</div>
+                                <div>3. ${displayRpmText(rpmTeorica, rpmSel, vcDesb, dMed)}</div>
                                 <div>4. V<sub>f</sub> = <strong>n real ${rpmAdoptada.toFixed(0)} rpm</strong> · ${fnDesb} mm/r = <strong>${vf.toFixed(2)} mm/min</strong></div>
                             </div>
                             <div class="bg-emerald-50 p-2 rounded border border-emerald-300 text-emerald-950 col-span-1 md:col-span-2 flex flex-col gap-1.5">
@@ -2913,7 +3160,7 @@
                                 </div>
                                 <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
                                     <div>3. D<sub>medio</sub> = <span class="frac inline-flex"><span>${dActual.toFixed(1)} + ${dObjetivo.toFixed(1)}</span><span>2</span></span> = <strong>${dMed.toFixed(2)} mm</strong></div>
-                                    <div>4. n = ${esModoProfesor ? `<span class="text-slate-500 text-[10px]">(constante D<sub>medio</sub> global)</span> ${displayRpmText(rpmConst, rpmConstSel)}` : `<span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${displayRpmText(rpmTeorica, rpmSel)}`}</div>
+                                    <div>4. ${displayRpmText(rpmTeorica, rpmSel, vcDesb, esModoProfesor ? dMedioGlobal : dMed)}</div>
                                 </div>
                                 <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5 col-span-1 md:col-span-2">
                                     <div>5. V<sub>f</sub> = <strong>n real ${rpmAdoptada.toFixed(0)} rpm</strong> · ${fnDesb} mm/r = <strong>${vf.toFixed(2)} mm/min</strong></div>
@@ -2959,7 +3206,7 @@
                             </div>
                             <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
                                 <div>3. D<sub>medio</sub> = <strong>${dMed.toFixed(2)} mm</strong></div>
-                                <div>4. n = <span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${displayRpmText(rpmTeorica, rpmSel)}</div>
+                                <div>4. ${displayRpmText(rpmTeorica, rpmSel, vcDesb, dMed)}</div>
                                 <div>5. V<sub>f</sub> = <strong>n real ${rpmAdoptada.toFixed(0)} rpm</strong> · ${fnDesb} mm/r = <strong>${vf.toFixed(2)} mm/min</strong></div>
                             </div>
                             <div class="bg-emerald-50 p-2 rounded border border-emerald-300 text-emerald-950 col-span-1 md:col-span-2 flex flex-col gap-1.5">
@@ -2972,9 +3219,54 @@
                 });
 
             // =====================================================================
+            // TALADRADO (MECHAS GENERADAS)
+            // =====================================================================
+            let htmlTaladrado = "";
+            let tiempoTaladrado = 0;
+
+            if (secuenciaMechas.length > 0) {
+                secuenciaMechas.forEach((m, idx) => {
+                    const d = m.d;
+                    const vc = m.vc;
+                    const fn = m.fn;
+                    const carrera = m.carrera; // Usar la longitud editada
+                    const cant = m.cantidad;
+
+                    const rpmTeorica = (vc * 1000) / (Math.PI * Math.max(d, 1));
+                    const rpmSel = seleccionarRpm(rpmTeorica);
+                    const rpmReal = rpmSel.rpm;
+                    const vf = rpmReal * fn;
+
+                    const tPaso = cant * (carrera / vf);
+                    tiempoTaladrado += tPaso;
+
+                    htmlTaladrado += `
+                        <div class="border border-emerald-300 rounded-lg p-3.5 bg-emerald-50/30 avoid-break mb-3">
+                            <div class="font-bold text-xs text-emerald-900 uppercase border-b border-emerald-200 pb-1.5 mb-2 flex justify-between flex-wrap gap-1">
+                                <span>Paso ${idx + 1}: ${m.tipo === 'centro' ? 'Mecha de Centro' : 'Mecha Ø ' + d + ' mm'}</span>
+                                <span class="mono text-slate-700 text-[10.5px]">${m.codigo} | ${m.material}</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mono">
+                                <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
+                                    <div>1. Cantidad de agujeros: <strong>${cant}</strong></div>
+                                    <div>2. Longitud de carrera: <strong>${carrera.toFixed(2)} mm</strong></div>
+                                </div>
+                                <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
+                                    <div>3. ${displayRpmText(rpmTeorica, rpmSel, vc, d)}</div>
+                                    <div>4. V<sub>f</sub> = <strong>${rpmReal.toFixed(0)} rpm</strong> · ${fn} mm/rev = <strong>${vf.toFixed(2)} mm/min</strong></div>
+                                </div>
+                                <div class="bg-emerald-100 p-2 rounded border border-emerald-300 text-emerald-950 col-span-1 md:col-span-2 flex flex-col gap-1.5">
+                                    <div>5. <strong>T<sub>paso</sub></strong> = ${cant} · <span class="frac inline-flex"><span>${carrera.toFixed(2)} mm</span><span>${vf.toFixed(2)} mm/min</span></span> = <strong>${tPaso.toFixed(3)} min</strong></div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            // =====================================================================
             // TERMINACIÓN
             // =====================================================================
-            const tramosLongitudinales = tramosPieza.filter((t) => t.tipo !== "refrentado");
+            const tramosLongitudinales = tramosPieza.filter((t) => t.tipo !== "refrentado" && t.tipo !== "interior");
             let sumaHorizontales = 0,
                 sumaVerticales = 0,
                 sumaConos = 0;
@@ -3031,7 +3323,7 @@
             const tiempoChaflan = hayChaflan ? nChaflanes * tChaflanUnit : 0;
 
             const tiempoTotalDesbaste = tiempoDesbLadoA + tiempoDesbLadoB;
-            const tiempoTotalGeneral = tiempoTotalDesbaste + tiempoTerminacion + tiempoChaflan;
+            const tiempoTotalGeneral = tiempoTotalDesbaste + tiempoTerminacion + tiempoTaladrado + tiempoChaflan;
 
             // =====================================================================
             // RENDER INFORME
@@ -3052,7 +3344,7 @@
                         <div><strong>• Material:</strong> ${matDesb.nombre} (CMC ${matDesb.cmc})</div>
                         <div><strong>• Bruto:</strong> Ø${dBruto} mm × ${lBruto} mm</div>
                         <div><strong>• Potencia:</strong> ${potMotorKW.toFixed(2)} kW ${usaEta ? `(η=${eta} → P<sub>útil</sub>=${potDisponibleKW.toFixed(2)} kW)` : ``}</div>
-                        <div><strong>• Mango:</strong> ${mangoKey.slice(0, 2)}×${mangoKey.slice(2, 4)} mm | ${usaMaxRpm ? `Tope: ${maxRpm} rpm` : `Sin tope RPM`}${usaEscalones && rpmStepsList.length > 0 ? ` | 🔢 Escalones activos (se adopta el inferior ≤ nominal): ${rpmStepsList.join(", ")} rpm` : ""}</div>
+                        <div><strong>• Mango:</strong> ${mangoKey.slice(0, 2)}×${mangoKey.slice(2, 4)} mm | ${usaMaxRpm ? `Tope: ${maxRpm} rpm` : `Sin tope RPM`}${usaEscalones && rpmStepsList.length > 0 ? ` | 🔢 Escalones: ${rpmStepsList.join(", ")} rpm` : ""}</div>
                     </div>
                     ${usaTemple ? `<div class="p-3 rounded-lg bg-amber-50 border-l-4 border-amber-500 text-xs text-amber-950"><strong>🔥 Secuencia con Temple Intermedio:</strong> desbaste en estado blando dejando ${sobreespRadial} mm de sobreespesor radial; terminación en estado <strong>${matTerm.nombre}</strong>.</div>` : ""}
                     ${usaEscalones && rpmStepsList.length === 0 ? `<div class="p-3 rounded-lg bg-rose-50 border-l-4 border-rose-500 text-xs text-rose-950"><strong>⚠️ Escalones activados pero sin RPMs cargadas:</strong> se usará la RPM nominal (con tope máximo si aplica).</div>` : ""}
@@ -3177,19 +3469,27 @@
                         ${sumaConos > 0 ? `<div>• Suma generatrices cónicas (Pitágoras): <strong>${sumaConos.toFixed(2)} mm</strong></div>` : ""}
                         <div class="pt-1 border-t border-slate-200 font-bold">• Longitud Total Perfilado = ${sumaHorizontales.toFixed(2)} + ${sumaVerticales.toFixed(2)} ${sumaConos > 0 ? `+ ${sumaConos.toFixed(2)}` : ""} = <strong>${longTotalTerm.toFixed(2)} mm</strong></div>
                         <div>• D<sub>medio</sub> = ${modoProfesor ? `(Global) ${dMedioTerm.toFixed(2)}` : `<span class="frac inline-flex"><span>${dMaxFinal} + ${dMinFinal}</span><span>2</span></span> = <strong>${dMedioTerm.toFixed(2)}</strong>`} mm</div>
-                        <div>• n = <span class="frac inline-flex"><span>${vcTerm} · 1000</span><span>π · ${dMedioTerm.toFixed(2)}</span></span> = ${displayRpmText(rpmTermTeorica, rpmTermSel)}</div>
+                        <div>• ${displayRpmText(rpmTermTeorica, rpmTermSel, vcTerm, dMedioTerm)}</div>
                         <div>• V<sub>f</sub> = <strong>n real ${rpmTermAdoptada.toFixed(0)} rpm</strong> · ${fnTerm} mm/r = <strong>${vfTerm.toFixed(2)} mm/min</strong></div>
                         <div class="bg-emerald-50 p-2 rounded border border-emerald-300 text-emerald-950 font-bold mt-2">• T<sub>final</sub> = <span class="frac inline-flex"><span>${longTotalTerm.toFixed(2)}</span><span>${vfTerm.toFixed(2)}</span></span> = <strong>${tiempoTerminacion.toFixed(3)} min</strong></div>
                         ${hayChaflan ? `<div class="bg-amber-50 p-2 rounded border border-amber-300 text-amber-950 font-bold mt-1">• T<sub>chaflán</sub> (${nChaflanes} × ${tChaflanUnit} min) = <strong>${tiempoChaflan.toFixed(3)} min</strong></div>` : ""}
                     </div>
                 </div>
 
-                <div class="bg-slate-900 text-white p-4 rounded-xl avoid-break flex flex-wrap items-center justify-between gap-4">
+                ${secuenciaMechas.length > 0 ? `
+                <div class="space-y-3 avoid-break">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 bg-emerald-100 px-3 py-1.5 rounded border-l-4 border-emerald-600">6. Secuencia de Taladrado</h3>
+                    ${htmlTaladrado}
+                    <div class="text-right text-xs font-bold mono bg-emerald-50 p-2 rounded border border-emerald-200">Subtotal Tiempo Taladrado = ${tiempoTaladrado.toFixed(3)} min</div>
+                </div>` : ""}
+
+                <div class="bg-slate-900 text-white p-4 rounded-xl avoid-break flex flex-wrap items-center justify-between gap-4 mt-6">
                     <div class="space-y-1 text-xs">
                         <div class="text-slate-400 uppercase font-bold tracking-wider">Resumen General del Ciclo</div>
                         <div class="mono">• Desbaste Lado A: <strong>${tiempoDesbLadoA.toFixed(3)} min</strong></div>
                         <div class="mono">• Desbaste Lado B: <strong>${tiempoDesbLadoB.toFixed(3)} min</strong></div>
                         <div class="mono">• Terminación: <strong>${tiempoTerminacion.toFixed(3)} min</strong></div>
+                        ${secuenciaMechas.length > 0 ? `<div class="mono">• Taladrado (Mechas): <strong>${tiempoTaladrado.toFixed(3)} min</strong></div>` : ""}
                         ${hayChaflan ? `<div class="mono">• Chaflán: <strong>${tiempoChaflan.toFixed(3)} min</strong></div>` : ""}
                         <div class="mono">• Potencia máxima: <strong>${pConsumidaMotor.toFixed(2)} kW</strong> (disponible ${potMotorKW.toFixed(2)} kW)</div>
                     </div>
@@ -3207,6 +3507,8 @@
         // =========================================================================
         function cargarPreset(cual) {
             tramosPieza = [];
+            secuenciaMechas = [];
+            window._lastSecuenciaMechas = [];
             contadorTramos = 0;
             if (cual === "ej1") {
                 document.getElementById("matSelect").value = "01.2";
@@ -3298,6 +3600,7 @@
             }
             asegurarPosturaB();
             renderizarListaTramos();
+            recalcularSecuenciaMechas();
             actualizarConversionPotencia();
             actualizarSeccionChaflan();
             validarTodosMangos();

@@ -50,12 +50,35 @@
             line-height: 1.15;
         }
 
-        .iso-P { background-color: #2563eb; color: white; }
-        .iso-M { background-color: #eab308; color: #0f172a; }
-        .iso-K { background-color: #dc2626; color: white; }
-        .iso-N { background-color: #16a34a; color: white; }
-        .iso-S { background-color: #ea580c; color: white; }
-        .iso-H { background-color: #64748b; color: white; }
+        .iso-P {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .iso-M {
+            background-color: #eab308;
+            color: #0f172a;
+        }
+
+        .iso-K {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .iso-N {
+            background-color: #16a34a;
+            color: white;
+        }
+
+        .iso-S {
+            background-color: #ea580c;
+            color: white;
+        }
+
+        .iso-H {
+            background-color: #64748b;
+            color: white;
+        }
 
         .input-manual-on {
             background-color: #fef3c7 !important;
@@ -388,6 +411,29 @@
                             <span class="text-[10px] text-slate-500 font-bold">RPM</span>
                         </div>
                     </div>
+                    <div class="p-2.5 rounded-lg bg-indigo-50 border border-indigo-200 flex flex-col gap-2 mt-2">
+                        <label class="flex items-center gap-2 cursor-pointer font-semibold text-indigo-950">
+                            <input type="checkbox" id="chkRpmEscalonadas" onchange="
+                                        toggleRpmStepsUI();
+                                        marcarCambiosPendientes();
+                                    " class="rounded text-indigo-600" />
+                            <span>🔢 Usar Escalones Reales de RPM del Torno (Tabla)</span>
+                        </label>
+                        <div id="boxRpmSteps" class="hidden">
+                            <label class="block text-[11px] font-semibold text-indigo-900 mb-1">RPMs disponibles
+                                (separadas por coma):</label>
+                            <input type="text" id="rpmStepsInput" value="45, 90, 180, 360, 720, 1440"
+                                oninput="marcarCambiosPendientes()"
+                                class="w-full p-2 rounded border border-indigo-300 bg-white font-mono font-bold text-indigo-950 text-[12px]"
+                                placeholder="Ej: 45, 90, 180, 360, 720, 1440" />
+                            <p class="text-[10px] text-indigo-800 mt-1 leading-snug">
+                                💡 Se calcula la RPM teórica nominal y se adopta el <strong>escalón inmediatamente
+                                    inferior</strong> disponible en la tabla del torno.
+                                Si todos los escalones son mayores que la nominal, se fuerza el mínimo con aviso.
+                            </p>
+                            <div id="rpmStepsPreview" class="text-[10px] font-mono text-indigo-700 mt-1"></div>
+                        </div>
+                    </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">Sección Mango Torreta Adoptada (h×b):</label>
                         <input type="text" id="mangoAdoptadoDisplay" readonly
@@ -395,9 +441,12 @@
                     </div>
                     <div class="flex items-center gap-2 mt-1">
                         <label class="flex items-center gap-1 text-[11px] font-semibold text-slate-700 cursor-pointer">
-                            <input type="checkbox" id="chkMangoMin" onchange="toggleMangoLimits()" class="rounded text-blue-600" /> Límite Mín
+                            <input type="checkbox" id="chkMangoMin" onchange="toggleMangoLimits()"
+                                class="rounded text-blue-600" /> Límite Mín
                         </label>
-                        <select id="mangoMinInput" disabled class="w-24 p-1 rounded border border-slate-300 font-mono text-xs opacity-50" onchange="toggleMangoLimits()">
+                        <select id="mangoMinInput" disabled
+                            class="w-24 p-1 rounded border border-slate-300 font-mono text-xs opacity-50"
+                            onchange="toggleMangoLimits()">
                             <option value="">--</option>
                             <option value="0808">08×08</option>
                             <option value="1010">10×10</option>
@@ -410,11 +459,15 @@
                             <option value="4040">40×40</option>
                             <option value="5050">50×50</option>
                         </select>
-                        
-                        <label class="flex items-center gap-1 text-[11px] font-semibold text-slate-700 cursor-pointer ml-2">
-                            <input type="checkbox" id="chkMangoMax" onchange="toggleMangoLimits()" class="rounded text-blue-600" /> Límite Máx
+
+                        <label
+                            class="flex items-center gap-1 text-[11px] font-semibold text-slate-700 cursor-pointer ml-2">
+                            <input type="checkbox" id="chkMangoMax" onchange="toggleMangoLimits()"
+                                class="rounded text-blue-600" /> Límite Máx
                         </label>
-                        <select id="mangoMaxInput" disabled class="w-24 p-1 rounded border border-slate-300 font-mono text-xs opacity-50" onchange="toggleMangoLimits()">
+                        <select id="mangoMaxInput" disabled
+                            class="w-24 p-1 rounded border border-slate-300 font-mono text-xs opacity-50"
+                            onchange="toggleMangoLimits()">
                             <option value="">--</option>
                             <option value="0808">08×08</option>
                             <option value="1010">10×10</option>
@@ -631,7 +684,8 @@
                                     <input type="text" id="catPortaDesb" placeholder="Sin porta asignado" readonly
                                         oninput="validarMangoPorta(this.value, 'desb'); marcarCambiosPendientes()"
                                         class="w-full p-1 rounded border border-blue-300 bg-slate-100 font-bold text-blue-900 text-[11px]" />
-                                    <div id="warnMangoDesb" class="text-[10px] font-bold text-red-600 mt-0.5 hidden"></div>
+                                    <div id="warnMangoDesb" class="text-[10px] font-bold text-red-600 mt-0.5 hidden">
+                                    </div>
                                 </td>
                                 <td class="p-1.5 space-y-1">
                                     <label
@@ -645,7 +699,8 @@
                                     <input type="text" id="catPortaTerm" placeholder="Sin porta asignado" readonly
                                         oninput="validarMangoPorta(this.value, 'term'); marcarCambiosPendientes()"
                                         class="w-full p-1 rounded border border-emerald-300 bg-slate-100 font-bold text-emerald-900 text-[11px]" />
-                                    <div id="warnMangoTerm" class="text-[10px] font-bold text-red-600 mt-0.5 hidden"></div>
+                                    <div id="warnMangoTerm" class="text-[10px] font-bold text-red-600 mt-0.5 hidden">
+                                    </div>
                                 </td>
                             </tr>
 
@@ -1009,7 +1064,6 @@
                             Bruto</span>
                     </div>
                 </div>
-                <!-- SE AUMENTÓ LA ALTURA DEL CANVAS A h-96 -->
                 <div class="w-full bg-slate-900 rounded-lg p-2 border border-slate-800">
                     <canvas id="piezaCanvas" class="w-full h-96 block"></canvas>
                 </div>
@@ -1058,16 +1112,16 @@
         };
 
         const DB_MANGOS = {
-            "0808": {letra: "D", l1: 60, sizePosC: "06", sizePosD: "07", sizeNegC: "09", sizeNegD: "11"},
-            1010: {letra: "E", l1: 70, sizePosC: "06", sizePosD: "07", sizeNegC: "09", sizeNegD: "11"},
-            1212: {letra: "F", l1: 80, sizePosC: "09", sizePosD: "11", sizeNegC: "09", sizeNegD: "11"},
-            1616: {letra: "H", l1: 100, sizePosC: "09", sizePosD: "11", sizeNegC: "12", sizeNegD: "11"},
-            2020: {letra: "K", l1: 125, sizePosC: "12", sizePosD: "11", sizeNegC: "12", sizeNegD: "11"},
-            2525: {letra: "M", l1: 150, sizePosC: "12", sizePosD: "11", sizeNegC: "12", sizeNegD: "15"},
-            3225: {letra: "P", l1: 170, sizePosC: "12", sizePosD: "11", sizeNegC: "16", sizeNegD: "15"},
-            3232: {letra: "P", l1: 170, sizePosC: "12", sizePosD: "11", sizeNegC: "16", sizeNegD: "15"},
-            4040: {letra: "S", l1: 250, sizePosC: "12", sizePosD: "11", sizeNegC: "19", sizeNegD: "15"},
-            5050: {letra: "T", l1: 300, sizePosC: "12", sizePosD: "11", sizeNegC: "25", sizeNegD: "15"},
+            "0808": { letra: "D", l1: 60, sizePosC: "06", sizePosD: "07", sizeNegC: "09", sizeNegD: "11" },
+            1010: { letra: "E", l1: 70, sizePosC: "06", sizePosD: "07", sizeNegC: "09", sizeNegD: "11" },
+            1212: { letra: "F", l1: 80, sizePosC: "09", sizePosD: "11", sizeNegC: "09", sizeNegD: "11" },
+            1616: { letra: "H", l1: 100, sizePosC: "09", sizePosD: "11", sizeNegC: "12", sizeNegD: "11" },
+            2020: { letra: "K", l1: 125, sizePosC: "12", sizePosD: "11", sizeNegC: "12", sizeNegD: "11" },
+            2525: { letra: "M", l1: 150, sizePosC: "12", sizePosD: "11", sizeNegC: "12", sizeNegD: "15" },
+            3225: { letra: "P", l1: 170, sizePosC: "12", sizePosD: "11", sizeNegC: "16", sizeNegD: "15" },
+            3232: { letra: "P", l1: 170, sizePosC: "12", sizePosD: "11", sizeNegC: "16", sizeNegD: "15" },
+            4040: { letra: "S", l1: 250, sizePosC: "12", sizePosD: "11", sizeNegC: "19", sizeNegD: "15" },
+            5050: { letra: "T", l1: 300, sizePosC: "12", sizePosD: "11", sizeNegC: "25", sizeNegD: "15" },
         };
 
         const INFO_SISTEMAS = {
@@ -1099,7 +1153,7 @@
             if (!lBruto || lBruto <= 0) faltantes.push("Largo en Bruto L (Panel 2)");
             if (isNaN(sobreesp) || sobreesp < 0) faltantes.push("Sobreespesor Radial (Panel 2)");
             if (tramosPieza.length === 0) faltantes.push("Al menos 1 Tramo Geométrico en el Plano (Panel 4)");
-            return {ok: faltantes.length === 0, faltantes: faltantes};
+            return { ok: faltantes.length === 0, faltantes: faltantes };
         }
 
         // =========================================================================
@@ -1116,6 +1170,90 @@
                     t.postura = "A";
                 }
             });
+        }
+
+        // =========================================================================
+        // 3.b RPM ESCALONADAS (TABLA REAL DEL TORNO)
+        // =========================================================================
+        function toggleRpmStepsUI() {
+            const c = document.getElementById("chkRpmEscalonadas").checked;
+            document.getElementById("boxRpmSteps").classList.toggle("hidden", !c);
+            actualizarPreviewRpmSteps();
+        }
+
+        function actualizarPreviewRpmSteps() {
+            const preview = document.getElementById("rpmStepsPreview");
+            if (!preview) return;
+            const steps = parseRpmSteps();
+            if (steps.length === 0) {
+                preview.textContent = "⚠️ Ingresá al menos una RPM válida";
+                preview.className = "text-[10px] font-mono text-amber-700 mt-1";
+                return;
+            }
+            preview.textContent = `✓ ${steps.length} escalones detectados: ${steps.join(" · ")} rpm`;
+            preview.className = "text-[10px] font-mono text-emerald-700 mt-1";
+        }
+
+        function parseRpmSteps() {
+            const raw = (document.getElementById("rpmStepsInput").value || "").trim();
+            if (!raw) return [];
+            return raw
+                .split(/[,;\s]+/)
+                .map((s) => parseFloat(s))
+                .filter((v) => !isNaN(v) && v > 0)
+                .sort((a, b) => a - b);
+        }
+
+        // Devuelve {rpm, tipo, nota}
+        // tipo: 'nominal' | 'tope' | 'escalon' | 'escalon-min' | 'sin-steps'
+        function seleccionarRpm(nominalRpm) {
+            if (!isFinite(nominalRpm) || nominalRpm <= 0) {
+                return { rpm: 0, tipo: "nominal", nota: "" };
+            }
+            const usaMax = document.getElementById("chkMaxRpm").checked;
+            const maxRpm = parseFloat(document.getElementById("maxRpmInput").value) || 2000;
+            const usaEscalones = document.getElementById("chkRpmEscalonadas").checked;
+
+            let rpmLimitada = nominalRpm;
+            let fueTope = false;
+            if (usaMax && rpmLimitada > maxRpm) {
+                rpmLimitada = maxRpm;
+                fueTope = true;
+            }
+
+            if (!usaEscalones) {
+                return { rpm: rpmLimitada, tipo: fueTope ? "tope" : "nominal", nota: "" };
+            }
+
+            const steps = parseRpmSteps();
+            if (steps.length === 0) {
+                return { rpm: rpmLimitada, tipo: "sin-steps", nota: "Sin escalones válidos cargados" };
+            }
+
+            const validSteps = steps.filter((s) => s <= rpmLimitada + 0.01);
+            if (validSteps.length > 0) {
+                return { rpm: validSteps[validSteps.length - 1], tipo: "escalon", nota: "" };
+            }
+            // Todos los escalones del torno son mayores que la RPM nominal
+            return { rpm: steps[0], tipo: "escalon-min", nota: "Todos los escalones del torno superan la RPM nominal; se fuerza el mínimo" };
+        }
+
+        function displayRpmText(rpmTeorica, sel) {
+            const teo = rpmTeorica.toFixed(0);
+            const real = sel.rpm.toFixed(0);
+            if (sel.tipo === "escalon") {
+                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong class="text-indigo-700">n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(escalón inferior de la caja del torno)</span>`;
+            }
+            if (sel.tipo === "escalon-min") {
+                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong class="text-amber-700">n real adoptada = ${real} rpm ⚠️</strong> <span class="text-slate-500 text-[10px]">(mínimo del torno; nominal &lt; mínimo)</span>`;
+            }
+            if (sel.tipo === "tope") {
+                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong class="text-amber-700">n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(límite máx. husillo)</span>`;
+            }
+            if (sel.tipo === "sin-steps") {
+                return `${teo} rpm <span class="text-slate-500 text-[10px]">(nominal)</span> → <strong>n real adoptada = ${real} rpm</strong> <span class="text-slate-500 text-[10px]">(sin escalones cargados)</span>`;
+            }
+            return `<strong>n adoptada = ${teo} rpm</strong> <span class="text-slate-500 text-[10px]">(nominal, sin limitación)</span>`;
         }
 
         // =========================================================================
@@ -1165,14 +1303,14 @@
                     const espD = szD === "07" ? "02" : "T3";
 
                     poblarSelect("selPortaChaflan", [
-                        {code: `SCKCR/L ${mangoKey}${mInfo.letra} ${sufC}`, desc: `SCKCR/L ${mangoKey}${mInfo.letra} ${sufC} (kr=75° •• Chaflán 45°)`},
-                        {code: `SDJCR/L ${mangoKey}${mInfo.letra} ${szD}`, desc: `SDJCR/L ${mangoKey}${mInfo.letra} ${szD} (kr=93° •• Chaflán 45° Radial)`},
-                        {code: `SDNCN ${mangoKey}${mInfo.letra} ${szD}`, desc: `SDNCN ${mangoKey}${mInfo.letra} ${szD} (kr=62.5° •• Neutro Chaflán ≤60°)`},
+                        { code: `SCKCR/L ${mangoKey}${mInfo.letra} ${sufC}`, desc: `SCKCR/L ${mangoKey}${mInfo.letra} ${sufC} (kr=75° •• Chaflán 45°)` },
+                        { code: `SDJCR/L ${mangoKey}${mInfo.letra} ${szD}`, desc: `SDJCR/L ${mangoKey}${mInfo.letra} ${szD} (kr=93° •• Chaflán 45° Radial)` },
+                        { code: `SDNCN ${mangoKey}${mInfo.letra} ${szD}`, desc: `SDNCN ${mangoKey}${mInfo.letra} ${szD} (kr=62.5° •• Neutro Chaflán ≤60°)` },
                     ]);
                     poblarSelect("selInsChaflan", [
-                        {code: `CCMT ${szC} ${espC} 08-PF (GC4215)`, desc: `CCMT ${szC} ${espC} 08-PF (GC4215) [Rómbica 80° ••]`},
-                        {code: `DCMT ${szD} ${espD} 04-PF (GC4215)`, desc: `DCMT ${szD} ${espD} 04-PF (GC4215) [Rómbica 55° ••]`},
-                        {code: `DCMX ${szD} ${espD} 04-WF (GC4215)`, desc: `DCMX ${szD} ${espD} 04-WF (GC4215) [Wiper 55° ••]`},
+                        { code: `CCMT ${szC} ${espC} 08-PF (GC4215)`, desc: `CCMT ${szC} ${espC} 08-PF (GC4215) [Rómbica 80° ••]` },
+                        { code: `DCMT ${szD} ${espD} 04-PF (GC4215)`, desc: `DCMT ${szD} ${espD} 04-PF (GC4215) [Rómbica 55° ••]` },
+                        { code: `DCMX ${szD} ${espD} 04-WF (GC4215)`, desc: `DCMX ${szD} ${espD} 04-WF (GC4215) [Wiper 55° ••]` },
                     ]);
                     catPorta.value = `SCKCR/L ${mangoKey}${mInfo.letra} ${sufC}`;
                     const insPartsChaflan = splitCodigoCalidad(`CCMT ${szC} ${espC} 08-PF (GC4215)`);
@@ -1471,8 +1609,8 @@
                     const pJ = sisCode === "RC_NEG" ? `DDJNR/L ${mangoKey}${mInfo.letra} ${szDN}` : `PDJNR/L ${mangoKey}${mInfo.letra} ${szDN}`;
                     const pN = sisCode === "RC_NEG" ? `DDNNN ${mangoKey}${mInfo.letra} ${szDN}` : `PDJNR/L ${mangoKey}${mInfo.letra} ${szDN}`;
                     opcionesPorta = hayCono
-                        ? [ { code: pN, desc: `${pN} (kr=62.5° •• Copiado)` }, { code: pJ, desc: `${pJ} (kr=93° •• Perfilado)` } ]
-                        : [ { code: pJ, desc: `${pJ} (kr=93° •• Perfilado)` }, { code: pN, desc: `${pN} (kr=62.5° •• Copiado)` } ];
+                        ? [{ code: pN, desc: `${pN} (kr=62.5° •• Copiado)` }, { code: pJ, desc: `${pJ} (kr=93° •• Perfilado)` }]
+                        : [{ code: pJ, desc: `${pJ} (kr=93° •• Perfilado)` }, { code: pN, desc: `${pN} (kr=62.5° •• Copiado)` }];
                     opcionesInserto = [
                         { code: `DNMG ${szDN} ${espDN} 04-${mat.romTerm} (${mat.calTerm})`, desc: `DNMG ${szDN} ${espDN} 04-${mat.romTerm} (${mat.calTerm}) [D 55° r=0.4 ••]` },
                         { code: `DNMX ${szDN} ${espDN} 04-WF (${mat.calTerm})`, desc: `DNMX ${szDN} ${espDN} 04-WF (${mat.calTerm}) [Wiper ••]` },
@@ -1526,10 +1664,10 @@
         }
 
         function splitCodigoCalidad(full) {
-            if (!full) return {code: "", calidad: ""};
+            if (!full) return { code: "", calidad: "" };
             const m = full.match(/^(.*?)\s*\(([^)\s]+)/);
-            if (m) return {code: m[1].trim(), calidad: m[2].trim()};
-            return {code: full.trim(), calidad: ""};
+            if (m) return { code: m[1].trim(), calidad: m[2].trim() };
+            return { code: full.trim(), calidad: "" };
         }
 
         function normalizarCalidad(input) {
@@ -1564,7 +1702,7 @@
                     C: "Rómbica 80°", D: "Rómbica 55°", S: "Cuadrada 90°", T: "Triangular 60°",
                     V: "Rómbica 35°", W: "Trigonal 80°", R: "Redonda",
                 };
-                const rompevirutaDic = {R: "Desbaste", M: "Medio", F: "Terminación/Acabado"};
+                const rompevirutaDic = { R: "Desbaste", M: "Medio", F: "Terminación/Acabado" };
                 let forma = formaDic[match[1]] || match[1];
                 let incidencia = match[2] === "N" ? "Negativa (0°)" : "Positiva";
                 let tamano = match[5];
@@ -1646,12 +1784,12 @@
         // =========================================================================
         function toggleManualCampo(campo) {
             const maps = {
-                portaDesb: {chk: "chkManualPortaDesb", sel: "selPortaDesb", txt: "catPortaDesb"},
-                insDesb: {chk: "chkManualInsDesb", sel: "selInsDesb", txt: "catInsDesb", cal: "calidadDesb"},
-                portaTerm: {chk: "chkManualPortaTerm", sel: "selPortaTerm", txt: "catPortaTerm"},
-                insTerm: {chk: "chkManualInsTerm", sel: "selInsTerm", txt: "catInsTerm", cal: "calidadTerm"},
-                portaChaflan: {chk: "chkManualPortaChaflan", sel: "selPortaChaflan", txt: "catPortaChaflan"},
-                insChaflan: {chk: "chkManualInsChaflan", sel: "selInsChaflan", txt: "catInsChaflan", cal: "calidadChaflan"},
+                portaDesb: { chk: "chkManualPortaDesb", sel: "selPortaDesb", txt: "catPortaDesb" },
+                insDesb: { chk: "chkManualInsDesb", sel: "selInsDesb", txt: "catInsDesb", cal: "calidadDesb" },
+                portaTerm: { chk: "chkManualPortaTerm", sel: "selPortaTerm", txt: "catPortaTerm" },
+                insTerm: { chk: "chkManualInsTerm", sel: "selInsTerm", txt: "catInsTerm", cal: "calidadTerm" },
+                portaChaflan: { chk: "chkManualPortaChaflan", sel: "selPortaChaflan", txt: "catPortaChaflan" },
+                insChaflan: { chk: "chkManualInsChaflan", sel: "selInsChaflan", txt: "catInsChaflan", cal: "calidadChaflan" },
             };
             const m = maps[campo];
             if (!m) return;
@@ -1700,7 +1838,7 @@
             const badge = document.getElementById("statusCalcTime");
             const avisoRep = document.getElementById("avisoPendienteReporte");
             const ahora = new Date();
-            const horaStr = ahora.toLocaleTimeString("es-AR", {hour: "2-digit", minute: "2-digit", second: "2-digit"});
+            const horaStr = ahora.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
             banner.className = "p-3.5 rounded-xl border bg-emerald-50 border-emerald-300 flex flex-col gap-2.5 shadow-sm";
             texto.className = "text-xs font-bold text-emerald-900 flex items-center gap-1.5";
             texto.innerHTML = "✅ Informe técnico actualizado y sincronizado";
@@ -1726,6 +1864,9 @@
             document.getElementById("chkMaxRpm").checked = false;
             document.getElementById("maxRpmInput").value = "";
             toggleRpmUI();
+            document.getElementById("chkRpmEscalonadas").checked = false;
+            document.getElementById("rpmStepsInput").value = "45, 90, 180, 360, 720, 1440";
+            toggleRpmStepsUI();
             document.getElementById("chkModoProfesor").checked = false;
             document.getElementById("chkContrapunta").checked = false;
             document.getElementById("mangoAdoptadoDisplay").value = "";
@@ -1843,41 +1984,41 @@
         function getMangoKey() {
             const potKW = obtenerPotenciaMotorKW();
             const dBruto = parseFloat(document.getElementById("dBrutoInput").value) || 40;
-            
+
             let targetSize = 16;
             if (potKW > 15) targetSize = 32;
             else if (potKW > 7.5) targetSize = 25;
             else if (potKW > 3.5) targetSize = 20;
             else if (potKW > 1.5) targetSize = 16;
             else targetSize = 12;
-            
+
             if (dBruto > 150) targetSize = Math.max(targetSize, 25);
             else if (dBruto > 80) targetSize = Math.max(targetSize, 20);
             else if (dBruto > 40) targetSize = Math.max(targetSize, 16);
-            
+
             const minOn = document.getElementById("chkMangoMin").checked;
             const maxOn = document.getElementById("chkMangoMax").checked;
-            
+
             let minVal = 0;
             let maxVal = 999;
-            
+
             if (minOn && document.getElementById("mangoMinInput").value) {
                 const m = document.getElementById("mangoMinInput").value;
-                minVal = Math.min(parseInt(m.slice(0,2)), parseInt(m.slice(2,4)));
+                minVal = Math.min(parseInt(m.slice(0, 2)), parseInt(m.slice(2, 4)));
             }
             if (maxOn && document.getElementById("mangoMaxInput").value) {
                 const m = document.getElementById("mangoMaxInput").value;
-                maxVal = Math.max(parseInt(m.slice(0,2)), parseInt(m.slice(2,4)));
+                maxVal = Math.max(parseInt(m.slice(0, 2)), parseInt(m.slice(2, 4)));
             }
-            
+
             targetSize = Math.max(targetSize, minVal);
             targetSize = Math.min(targetSize, maxVal);
-            
-            const validKeys = Object.keys(DB_MANGOS).sort((a, b) => parseInt(a.slice(0,2)) - parseInt(b.slice(0,2)));
+
+            const validKeys = Object.keys(DB_MANGOS).sort((a, b) => parseInt(a.slice(0, 2)) - parseInt(b.slice(0, 2)));
             let bestKey = "1616";
             let minDiff = 999;
             for (let k of validKeys) {
-                const val = Math.min(parseInt(k.slice(0,2)), parseInt(k.slice(2,4)));
+                const val = Math.min(parseInt(k.slice(0, 2)), parseInt(k.slice(2, 4)));
                 const diff = Math.abs(val - targetSize);
                 if (diff < minDiff) {
                     minDiff = diff;
@@ -1896,15 +2037,15 @@
             maxSel.disabled = !maxOn;
             minSel.classList.toggle("opacity-50", !minOn);
             maxSel.classList.toggle("opacity-50", !maxOn);
-            
+
             if (minOn && maxOn && minSel.value && maxSel.value) {
-                const minVal = Math.min(parseInt(minSel.value.slice(0,2)), parseInt(minSel.value.slice(2,4)));
-                const maxVal = Math.max(parseInt(maxSel.value.slice(0,2)), parseInt(maxSel.value.slice(2,4)));
+                const minVal = Math.min(parseInt(minSel.value.slice(0, 2)), parseInt(minSel.value.slice(2, 4)));
+                const maxVal = Math.max(parseInt(maxSel.value.slice(0, 2)), parseInt(maxSel.value.slice(2, 4)));
                 if (minVal > maxVal) {
                     maxSel.value = minSel.value; // Corregir cruce
                 }
             }
-            
+
             actualizarMangoAdoptadoYPortas();
             marcarCambiosPendientes();
         }
@@ -1914,7 +2055,7 @@
             const display = document.getElementById("mangoAdoptadoDisplay");
             if (display) {
                 const info = DB_MANGOS[newKey] || DB_MANGOS["1616"];
-                display.value = `${newKey.slice(0,2)}×${newKey.slice(2,4)} mm (${info.letra || ''} - Calculado automáticamente)`;
+                display.value = `${newKey.slice(0, 2)}×${newKey.slice(2, 4)} mm (${info.letra || ''} - Calculado automáticamente)`;
             }
 
             const oldKey = window._lastMangoKey || "";
@@ -1924,8 +2065,8 @@
                 const sisTerm = document.getElementById("sisTermSelect").value;
                 if (sisDesb) aplicarSistemaACatalogo("desb", sisDesb);
                 if (sisTerm) aplicarSistemaACatalogo("term", sisTerm);
-                
-                lastMangoKeyChaflan = ""; 
+
+                lastMangoKeyChaflan = "";
                 actualizarSeccionChaflan();
             }
         }
@@ -2105,7 +2246,7 @@
                 chaflanIzq: 0,
                 chaflanDer: 0,
             };
-            const nuevo = datosIniciales ? {...defecto, ...datosIniciales, id: contadorTramos, tipo: tipo} : defecto;
+            const nuevo = datosIniciales ? { ...defecto, ...datosIniciales, id: contadorTramos, tipo: tipo } : defecto;
             tramosPieza.push(nuevo);
             asegurarPosturaB();
             renderizarListaTramos();
@@ -2394,7 +2535,7 @@
                 const wPx = L * scaleX;
                 const rIzqPx = (dIzq / 2) * scaleY;
                 const rDerPx = (dDer / 2) * scaleY;
-                
+
                 // Forzar tamaño mínimo visible para los chaflanes
                 const cIzqPxY = (t.chaflanIzq || 0) > 0 ? Math.max((t.chaflanIzq || 0) * scaleY, minPxChaflan) : 0;
                 const cDerPxY = (t.chaflanDer || 0) > 0 ? Math.max((t.chaflanDer || 0) * scaleY, minPxChaflan) : 0;
@@ -2550,6 +2691,8 @@
             const potDisponibleKW = potMotorKW * eta;
             const usaMaxRpm = document.getElementById("chkMaxRpm").checked;
             const maxRpm = parseFloat(document.getElementById("maxRpmInput").value) || 2000;
+            const usaEscalones = document.getElementById("chkRpmEscalonadas").checked;
+            const rpmStepsList = usaEscalones ? parseRpmSteps() : [];
             const dBruto = parseFloat(document.getElementById("dBrutoInput").value) || 40;
             const lBruto = parseFloat(document.getElementById("lBrutoInput").value) || 80;
             const sobreespRadial = parseFloat(document.getElementById("sobreespInput").value) || 0.5;
@@ -2637,7 +2780,8 @@
                 const nPasadas = Math.max(1, Math.ceil(profRadial / apDesb));
                 const dMed = dIn / 2;
                 const rpmTeorica = (vcDesb * 1000) / (Math.PI * Math.max(dMed, 1));
-                const rpmAdoptada = usaMaxRpm && rpmTeorica > maxRpm ? maxRpm : rpmTeorica;
+                const rpmSel = seleccionarRpm(rpmTeorica);
+                const rpmAdoptada = rpmSel.rpm;
                 const vf = rpmAdoptada * fnDesb;
                 const distRecorrido = dIn / 2;
                 const tPorPasada = distRecorrido / vf;
@@ -2655,8 +2799,8 @@
                                 <div>2. N° Pasadas = <span class="frac inline-flex"><span>${profRadial.toFixed(2)}</span><span>${apDesb}</span></span> = <strong>${nPasadas} pasadas</strong></div>
                             </div>
                             <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
-                                <div>3. n = <span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${rpmTeorica.toFixed(0)} rpm ${usaMaxRpm && rpmTeorica > maxRpm ? `→ <strong>Adoptado ${maxRpm} rpm</strong>` : `→ <strong>${rpmAdoptada.toFixed(0)} rpm</strong>`}</div>
-                                <div>4. V<sub>f</sub> = ${rpmAdoptada.toFixed(0)} · ${fnDesb} = <strong>${vf.toFixed(2)} mm/min</strong></div>
+                                <div>3. n = <span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${displayRpmText(rpmTeorica, rpmSel)}</div>
+                                <div>4. V<sub>f</sub> = <strong>n real ${rpmAdoptada.toFixed(0)} rpm</strong> · ${fnDesb} mm/r = <strong>${vf.toFixed(2)} mm/min</strong></div>
                             </div>
                             <div class="bg-emerald-50 p-2 rounded border border-emerald-300 text-emerald-950 col-span-1 md:col-span-2 flex flex-col gap-1.5">
                                 <div>5. T<sub>pasada</sub> = <span class="frac inline-flex"><span>${distRecorrido.toFixed(1)}</span><span>${vf.toFixed(2)}</span></span> = ${tPorPasada.toFixed(3)} min</div>
@@ -2664,7 +2808,7 @@
                             </div>
                         </div>
                     </div>`;
-                return {html: bloque, tiempo: tTotalOp};
+                return { html: bloque, tiempo: tTotalOp };
             }
 
             tramosA
@@ -2699,13 +2843,13 @@
                         const g = resolverGeometriaCono(t);
                         if (modoProfesor) {
                             return [
-                                {nombre: t.nombre + " (lado Ømayor)", dFinal: g.dMayor, largo: g.largo / 2, tipo: "cilindro"},
-                                {nombre: t.nombre + " (lado Ømenor)", dFinal: g.dMenor, largo: g.largo / 2, tipo: "cilindro"}
+                                { nombre: t.nombre + " (lado Ømayor)", dFinal: g.dMayor, largo: g.largo / 2, tipo: "cilindro" },
+                                { nombre: t.nombre + " (lado Ømenor)", dFinal: g.dMenor, largo: g.largo / 2, tipo: "cilindro" }
                             ];
                         }
-                        return {nombre: t.nombre, dFinal: g.dMenor, largo: g.largo, tipo: "cono", conoData: g};
+                        return { nombre: t.nombre, dFinal: g.dMenor, largo: g.largo, tipo: "cono", conoData: g };
                     }
-                    return {nombre: t.nombre, dFinal: t.dMenor, largo: t.largo, tipo: "cilindro"};
+                    return { nombre: t.nombre, dFinal: t.dMenor, largo: t.largo, tipo: "cilindro" };
                 }).flat();
 
                 const uniqueDiams = [...new Set(sections.map((s) => s.dFinal))].sort((a, b) => b - a);
@@ -2723,7 +2867,8 @@
                 });
                 const dMedioGlobal = (dBruto + dMinGlobal) / 2;
                 const rpmConst = (vcDesb * 1000) / (Math.PI * Math.max(dMedioGlobal, 1));
-                const rpmConstAdoptada = usaMaxRpm && rpmConst > maxRpm ? maxRpm : rpmConst;
+                const rpmConstSel = seleccionarRpm(rpmConst);
+                const rpmConstAdoptada = rpmConstSel.rpm;
                 const vfConst = rpmConstAdoptada * fnDesb;
 
                 for (const dNivel of uniqueDiams) {
@@ -2736,14 +2881,18 @@
                     const profRadial = (dActual - dObjetivo) / 2;
                     const nPasadas = Math.max(1, Math.ceil(profRadial / apDesb));
                     const dMed = (dActual + dObjetivo) / 2;
-                    let rpmTeorica, rpmAdoptada, vf;
+                    let rpmTeorica, rpmSel, rpmAdoptada, vf;
+                    let esModoProfesor = false;
                     if (modoProfesor) {
                         rpmTeorica = rpmConst;
+                        rpmSel = rpmConstSel;
                         rpmAdoptada = rpmConstAdoptada;
                         vf = vfConst;
+                        esModoProfesor = true;
                     } else {
                         rpmTeorica = (vcDesb * 1000) / (Math.PI * Math.max(dMed, 1));
-                        rpmAdoptada = usaMaxRpm && rpmTeorica > maxRpm ? maxRpm : rpmTeorica;
+                        rpmSel = seleccionarRpm(rpmTeorica);
+                        rpmAdoptada = rpmSel.rpm;
                         vf = rpmAdoptada * fnDesb;
                     }
                     const tPorPasada = lengthToMachine / vf;
@@ -2764,10 +2913,10 @@
                                 </div>
                                 <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
                                     <div>3. D<sub>medio</sub> = <span class="frac inline-flex"><span>${dActual.toFixed(1)} + ${dObjetivo.toFixed(1)}</span><span>2</span></span> = <strong>${dMed.toFixed(2)} mm</strong></div>
-                                    <div>4. n = <span class="frac inline-flex"><span>${modoProfesor ? rpmConst.toFixed(2) : `${vcDesb} · 1000`}</span><span>${modoProfesor ? '1' : `π · ${dMed.toFixed(2)}`}</span></span> = ${rpmAdoptada.toFixed(0)} rpm</div>
+                                    <div>4. n = ${esModoProfesor ? `<span class="text-slate-500 text-[10px]">(constante D<sub>medio</sub> global)</span> ${displayRpmText(rpmConst, rpmConstSel)}` : `<span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${displayRpmText(rpmTeorica, rpmSel)}`}</div>
                                 </div>
                                 <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5 col-span-1 md:col-span-2">
-                                    <div>5. V<sub>f</sub> = ${rpmAdoptada.toFixed(0)} · ${fnDesb} = <strong>${vf.toFixed(2)} mm/min</strong></div>
+                                    <div>5. V<sub>f</sub> = <strong>n real ${rpmAdoptada.toFixed(0)} rpm</strong> · ${fnDesb} mm/r = <strong>${vf.toFixed(2)} mm/min</strong></div>
                                 </div>
                                 <div class="bg-emerald-50 p-2 rounded border border-emerald-300 text-emerald-950 flex flex-col gap-1.5 col-span-1 md:col-span-2">
                                     <div>6. T<sub>pasada</sub> = <span class="frac inline-flex"><span>${lengthToMachine.toFixed(1)}</span><span>${vf.toFixed(2)}</span></span> = ${tPorPasada.toFixed(3)} min</div>
@@ -2792,7 +2941,8 @@
                     const nPasadas = Math.max(1, Math.ceil(profRadial / apDesb));
                     const dMed = (dBruto + dObj) / 2;
                     const rpmTeorica = (vcDesb * 1000) / (Math.PI * Math.max(dMed, 1));
-                    const rpmAdoptada = usaMaxRpm && rpmTeorica > maxRpm ? maxRpm : rpmTeorica;
+                    const rpmSel = seleccionarRpm(rpmTeorica);
+                    const rpmAdoptada = rpmSel.rpm;
                     const vf = rpmAdoptada * fnDesb;
                     const tPorPasada = tr.largo / vf;
                     const tTotal = tPorPasada * nPasadas;
@@ -2809,8 +2959,8 @@
                             </div>
                             <div class="bg-white p-2 rounded border border-slate-200 flex flex-col gap-1.5">
                                 <div>3. D<sub>medio</sub> = <strong>${dMed.toFixed(2)} mm</strong></div>
-                                <div>4. n = <span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${rpmAdoptada.toFixed(0)} rpm</div>
-                                <div>5. V<sub>f</sub> = <strong>${vf.toFixed(2)} mm/min</strong></div>
+                                <div>4. n = <span class="frac inline-flex"><span>${vcDesb} · 1000</span><span>π · ${dMed.toFixed(2)}</span></span> = ${displayRpmText(rpmTeorica, rpmSel)}</div>
+                                <div>5. V<sub>f</sub> = <strong>n real ${rpmAdoptada.toFixed(0)} rpm</strong> · ${fnDesb} mm/r = <strong>${vf.toFixed(2)} mm/min</strong></div>
                             </div>
                             <div class="bg-emerald-50 p-2 rounded border border-emerald-300 text-emerald-950 col-span-1 md:col-span-2 flex flex-col gap-1.5">
                                 <div>6. T<sub>pasada</sub> = <span class="frac inline-flex"><span>${tr.largo}</span><span>${vf.toFixed(2)}</span></span> = ${tPorPasada.toFixed(3)} min</div>
@@ -2850,26 +3000,28 @@
             }
             const dMaxFinal = diametrosFinales.length ? Math.max(...diametrosFinales) : 26;
             const dMinFinal = diametrosFinales.length ? Math.min(...diametrosFinales) : 20;
-            let dMedioTerm, rpmTermTeorica, rpmTermAdoptada, vfTerm;
-            let dMinGlobal = dBruto;
+            let dMedioTerm, rpmTermTeorica, rpmTermSel, rpmTermAdoptada, vfTerm;
+            let dMinGlobalTerm = dBruto;
             tramosPieza.forEach(t => {
-                if (t.tipo === 'cilindro') dMinGlobal = Math.min(dMinGlobal, t.dMenor);
+                if (t.tipo === 'cilindro') dMinGlobalTerm = Math.min(dMinGlobalTerm, t.dMenor);
                 else if (t.tipo === 'cono') {
                     const g = resolverGeometriaCono(t);
-                    dMinGlobal = Math.min(dMinGlobal, g.dMenor, g.dMayor);
+                    dMinGlobalTerm = Math.min(dMinGlobalTerm, g.dMenor, g.dMayor);
                 }
             });
-            const dMedioGlobal = (dBruto + dMinGlobal) / 2;
+            const dMedioGlobalTerm = (dBruto + dMinGlobalTerm) / 2;
 
             if (modoProfesor) {
-                dMedioTerm = dMedioGlobal;
+                dMedioTerm = dMedioGlobalTerm;
                 rpmTermTeorica = (vcTerm * 1000) / (Math.PI * Math.max(dMedioTerm, 1));
-                rpmTermAdoptada = usaMaxRpm && rpmTermTeorica > maxRpm ? maxRpm : rpmTermTeorica;
+                rpmTermSel = seleccionarRpm(rpmTermTeorica);
+                rpmTermAdoptada = rpmTermSel.rpm;
                 vfTerm = rpmTermAdoptada * fnTerm;
             } else {
                 dMedioTerm = (dMaxFinal + dMinFinal) / 2;
                 rpmTermTeorica = (vcTerm * 1000) / (Math.PI * Math.max(dMedioTerm, 1));
-                rpmTermAdoptada = usaMaxRpm && rpmTermTeorica > maxRpm ? maxRpm : rpmTermTeorica;
+                rpmTermSel = seleccionarRpm(rpmTermTeorica);
+                rpmTermAdoptada = rpmTermSel.rpm;
                 vfTerm = rpmTermAdoptada * fnTerm;
             }
             const longTotalTerm = sumaHorizontales + sumaVerticales + sumaConos;
@@ -2900,10 +3052,11 @@
                         <div><strong>• Material:</strong> ${matDesb.nombre} (CMC ${matDesb.cmc})</div>
                         <div><strong>• Bruto:</strong> Ø${dBruto} mm × ${lBruto} mm</div>
                         <div><strong>• Potencia:</strong> ${potMotorKW.toFixed(2)} kW ${usaEta ? `(η=${eta} → P<sub>útil</sub>=${potDisponibleKW.toFixed(2)} kW)` : ``}</div>
-                        <div><strong>• Mango:</strong> ${mangoKey.slice(0, 2)}×${mangoKey.slice(2, 4)} mm | ${usaMaxRpm ? `Tope: ${maxRpm} rpm` : `Sin tope RPM`}</div>
+                        <div><strong>• Mango:</strong> ${mangoKey.slice(0, 2)}×${mangoKey.slice(2, 4)} mm | ${usaMaxRpm ? `Tope: ${maxRpm} rpm` : `Sin tope RPM`}${usaEscalones && rpmStepsList.length > 0 ? ` | 🔢 Escalones activos (se adopta el inferior ≤ nominal): ${rpmStepsList.join(", ")} rpm` : ""}</div>
                     </div>
                     ${usaTemple ? `<div class="p-3 rounded-lg bg-amber-50 border-l-4 border-amber-500 text-xs text-amber-950"><strong>🔥 Secuencia con Temple Intermedio:</strong> desbaste en estado blando dejando ${sobreespRadial} mm de sobreespesor radial; terminación en estado <strong>${matTerm.nombre}</strong>.</div>` : ""}
-                    ${modoProfesor ? `<div class="p-3 rounded-lg bg-indigo-50 border-l-4 border-indigo-500 text-xs text-indigo-950"><strong>📘 Modo Profesor activado:</strong> se aplica simplificación de cono como escalón, cálculo entre puntos y rpm constante basada en D<sub>medio</sub> global = ${dMedioGlobal.toFixed(1)} mm.</div>` : ""}
+                    ${usaEscalones && rpmStepsList.length === 0 ? `<div class="p-3 rounded-lg bg-rose-50 border-l-4 border-rose-500 text-xs text-rose-950"><strong>⚠️ Escalones activados pero sin RPMs cargadas:</strong> se usará la RPM nominal (con tope máximo si aplica).</div>` : ""}
+                    ${modoProfesor ? `<div class="p-3 rounded-lg bg-indigo-50 border-l-4 border-indigo-500 text-xs text-indigo-950"><strong>📘 Modo Profesor activado:</strong> se aplica simplificación de cono como escalón, cálculo entre puntos y rpm constante basada en D<sub>medio</sub> global = ${dMedioGlobalTerm.toFixed(1)} mm.</div>` : ""}
 
                     <div class="overflow-x-auto border border-slate-300 rounded-lg">
                         <table class="w-full text-xs text-left border-collapse">
@@ -3005,6 +3158,7 @@
                 <div class="space-y-3">
                     <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 bg-slate-100 px-3 py-1.5 rounded border-l-4 border-slate-900">4. Tiempos de DESBASTE (por niveles escalonados)</h3>
                     <p class="text-[11px] text-slate-700 bg-slate-50 border border-slate-200 p-2 rounded">🧠 <strong>Estrategia:</strong> se desbasta <strong>por escalones de diámetro</strong> (no por tramo geométrico): primero se reduce todo lo mecanizable al diámetro mayor requerido, luego al siguiente, y así sucesivamente. Esto refleja la operación real de cilindrado.</p>
+                    ${usaEscalones && rpmStepsList.length > 0 ? `<p class="text-[11px] text-indigo-950 bg-indigo-50 border border-indigo-300 p-2 rounded mt-1">🔢 <strong>Escalones de RPM activos:</strong> en cada operación se calcula la <strong>n nominal</strong> = (V<sub>c</sub> · 1000)/(π · D) y se adopta la <strong>n real de la caja del torno</strong> como el <u>escalón inmediatamente inferior</u> (≤ nominal). Tabla cargada: <span class="mono font-bold">${rpmStepsList.join(" · ")} rpm</span>.</p>` : ""}
                     <div class="text-xs font-bold text-blue-950 uppercase tracking-wide">4.1 Postura 1 — Lado A:</div>
                     ${htmlDesbasteLadoA || '<p class="text-xs text-slate-500 italic">Sin operaciones en Lado A.</p>'}
                     <div class="text-right text-xs font-bold mono bg-blue-50 p-2 rounded border border-blue-200">Subtotal Tiempo Desbaste Lado A = ${tiempoDesbLadoA.toFixed(3)} min</div>
@@ -3015,6 +3169,7 @@
 
                 <div class="space-y-2 avoid-break">
                     <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 bg-slate-100 px-3 py-1.5 rounded border-l-4 border-slate-900">5. Terminación (copiado continuo del perfil)</h3>
+                    ${usaEscalones && rpmStepsList.length > 0 ? `<p class="text-[11px] text-indigo-950 bg-indigo-50 border border-indigo-300 p-2 rounded mb-2">🔢 <strong>Escalones de RPM activos:</strong> se calcula la <strong>n nominal</strong> = (V<sub>c</sub> · 1000)/(π · D) y se adopta la <strong>n real de la caja del torno</strong> como el <u>escalón inmediatamente inferior</u> (≤ nominal). Tabla: <span class="mono font-bold">${rpmStepsList.join(" · ")} rpm</span>.</p>` : ""}
                     ${detalleConosHTML}
                     <div class="border border-slate-300 rounded-lg p-3.5 bg-slate-50/60 text-xs mono space-y-2">
                         <div>• Suma tramos cilíndricos horizontales: <strong>${sumaHorizontales.toFixed(2)} mm</strong></div>
@@ -3022,8 +3177,8 @@
                         ${sumaConos > 0 ? `<div>• Suma generatrices cónicas (Pitágoras): <strong>${sumaConos.toFixed(2)} mm</strong></div>` : ""}
                         <div class="pt-1 border-t border-slate-200 font-bold">• Longitud Total Perfilado = ${sumaHorizontales.toFixed(2)} + ${sumaVerticales.toFixed(2)} ${sumaConos > 0 ? `+ ${sumaConos.toFixed(2)}` : ""} = <strong>${longTotalTerm.toFixed(2)} mm</strong></div>
                         <div>• D<sub>medio</sub> = ${modoProfesor ? `(Global) ${dMedioTerm.toFixed(2)}` : `<span class="frac inline-flex"><span>${dMaxFinal} + ${dMinFinal}</span><span>2</span></span> = <strong>${dMedioTerm.toFixed(2)}</strong>`} mm</div>
-                        <div>• n = <span class="frac inline-flex"><span>${vcTerm} · 1000</span><span>π · ${dMedioTerm.toFixed(2)}</span></span> = ${rpmTermTeorica.toFixed(0)} rpm ${usaMaxRpm && rpmTermTeorica > maxRpm ? `→ <strong>Limitado: ${maxRpm} rpm</strong>` : `→ <strong>${rpmTermAdoptada.toFixed(0)} rpm</strong>`}</div>
-                        <div>• V<sub>f</sub> = ${rpmTermAdoptada.toFixed(0)} · ${fnTerm} = <strong>${vfTerm.toFixed(2)} mm/min</strong></div>
+                        <div>• n = <span class="frac inline-flex"><span>${vcTerm} · 1000</span><span>π · ${dMedioTerm.toFixed(2)}</span></span> = ${displayRpmText(rpmTermTeorica, rpmTermSel)}</div>
+                        <div>• V<sub>f</sub> = <strong>n real ${rpmTermAdoptada.toFixed(0)} rpm</strong> · ${fnTerm} mm/r = <strong>${vfTerm.toFixed(2)} mm/min</strong></div>
                         <div class="bg-emerald-50 p-2 rounded border border-emerald-300 text-emerald-950 font-bold mt-2">• T<sub>final</sub> = <span class="frac inline-flex"><span>${longTotalTerm.toFixed(2)}</span><span>${vfTerm.toFixed(2)}</span></span> = <strong>${tiempoTerminacion.toFixed(3)} min</strong></div>
                         ${hayChaflan ? `<div class="bg-amber-50 p-2 rounded border border-amber-300 text-amber-950 font-bold mt-1">• T<sub>chaflán</sub> (${nChaflanes} × ${tChaflanUnit} min) = <strong>${tiempoChaflan.toFixed(3)} min</strong></div>` : ""}
                     </div>
@@ -3065,6 +3220,9 @@
                 document.getElementById("chkMaxRpm").checked = true;
                 document.getElementById("maxRpmInput").value = 2000;
                 toggleRpmUI();
+                document.getElementById("chkRpmEscalonadas").checked = false;
+                document.getElementById("rpmStepsInput").value = "45, 90, 180, 360, 720, 1440";
+                toggleRpmStepsUI();
                 document.getElementById("chkMangoMin").checked = false;
                 document.getElementById("chkMangoMax").checked = false;
                 document.getElementById("mangoMinInput").value = "";
@@ -3077,17 +3235,17 @@
                 document.getElementById("chkContrapunta").checked = false;
                 agregarTramoUI(
                     "cilindro",
-                    {postura: "B", nombre: "Extremo Izquierdo Ø20", dMayor: 20, dMenor: 20, largo: 15},
+                    { postura: "B", nombre: "Extremo Izquierdo Ø20", dMayor: 20, dMenor: 20, largo: 15 },
                     true,
                 );
                 agregarTramoUI(
                     "cilindro",
-                    {postura: "A", nombre: "Cuerpo Central Ø26", dMayor: 26, dMenor: 26, largo: 50},
+                    { postura: "A", nombre: "Cuerpo Central Ø26", dMayor: 26, dMenor: 26, largo: 50 },
                     true,
                 );
                 agregarTramoUI(
                     "cilindro",
-                    {postura: "A", nombre: "Extremo Derecho Ø20", dMayor: 20, dMenor: 20, largo: 15},
+                    { postura: "A", nombre: "Extremo Derecho Ø20", dMayor: 20, dMenor: 20, largo: 15 },
                     true,
                 );
             } else if (cual === "ej3") {
@@ -3101,6 +3259,9 @@
                 toggleEtaUI();
                 document.getElementById("chkMaxRpm").checked = false;
                 toggleRpmUI();
+                document.getElementById("chkRpmEscalonadas").checked = false;
+                document.getElementById("rpmStepsInput").value = "22, 45, 90, 180, 360, 720, 1440";
+                toggleRpmStepsUI();
                 document.getElementById("chkMangoMin").checked = false;
                 document.getElementById("chkMangoMax").checked = false;
                 document.getElementById("mangoMinInput").value = "";
@@ -3113,7 +3274,7 @@
                 document.getElementById("chkContrapunta").checked = false;
                 agregarTramoUI(
                     "cilindro",
-                    {postura: "B", nombre: "Cilindro #1 Ø190", dMayor: 190, dMenor: 190, largo: 100},
+                    { postura: "B", nombre: "Cilindro #1 Ø190", dMayor: 190, dMenor: 190, largo: 100 },
                     true,
                 );
                 agregarTramoUI(
@@ -3131,7 +3292,7 @@
                 );
                 agregarTramoUI(
                     "cilindro",
-                    {postura: "A", nombre: "Cilindro #3 Ø60", dMayor: 60, dMenor: 60, largo: 90},
+                    { postura: "A", nombre: "Cilindro #3 Ø60", dMayor: 60, dMenor: 60, largo: 90 },
                     true,
                 );
             }
@@ -3150,16 +3311,25 @@
             if (active && active.tagName === "INPUT" && active.type === "number") {
                 active.blur();
             }
-        }, {passive: true});
+        }, { passive: true });
 
         // Re-validar adoptados cuando cambian los rangos de catálogo
         document.querySelectorAll('input[id^="rAp"], input[id^="rFn"], input[id^="rVc"]').forEach((el) => {
             el.addEventListener("input", validarTodosAdoptados);
         });
 
+        // Preview de escalones en tiempo real
+        document.addEventListener("DOMContentLoaded", () => {
+            const rpmStepsInput = document.getElementById("rpmStepsInput");
+            if (rpmStepsInput) {
+                rpmStepsInput.addEventListener("input", actualizarPreviewRpmSteps);
+            }
+        });
+
         window.addEventListener("resize", dibujarPiezaCanvas);
         window.onload = () => {
             actualizarSeccionChaflan();
+            actualizarPreviewRpmSteps();
             cargarPreset("ej3");
         };
     </script>
